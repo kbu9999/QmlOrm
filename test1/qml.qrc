@@ -3,5 +3,6 @@
         <file>main.qml</file>
         <file>Cliente.qml</file>
         <file>Servicio.qml</file>
+        <file>DataBase.qml</file>
     </qresource>
 </RCC>

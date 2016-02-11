@@ -16,7 +16,8 @@ static QObject *createOrm(QQmlEngine *engine, QJSEngine *e) {
 void OrmPlugin::registerTypes(const char *uri)
 {
     // @uri QtQuick.Orm
-    qmlRegisterSingletonType<QOrm>(uri, 1, 0, "Orm", createOrm);
+    //qmlRegisterSingletonType<QOrm>(uri, 1, 0, "Orm", createOrm);
+    qmlRegisterType<QOrm>(uri, 1, 0, "Orm");
     qmlRegisterType<QOrmMetaTable>(uri, 1, 0, "OrmMetaTable");
     qmlRegisterType<QOrmMetaAttribute>(uri, 1, 0, "OrmMetaAttribute");
     qmlRegisterType<QOrmObject>(uri, 1, 0, "OrmObject");

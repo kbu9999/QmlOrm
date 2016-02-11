@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QVariant>
+#include <QQmlComponent>
 #include <qqml.h>
 
 class QOrmMetaTable;
@@ -16,6 +17,8 @@ class QOrmObject : public QObject
     Q_PROPERTY(bool dirt READ isDirt NOTIFY dirtChanged)
     Q_PROPERTY(QVariant primaryKey READ primaryKey NOTIFY primaryKeyChanged)
     Q_PROPERTY(QVariantList indexes READ indexes NOTIFY indexesChanged)
+    Q_PROPERTY(QQmlComponent* tableComponent READ tableComponent
+               WRITE setTableComponent NOTIFY tableComponentChanged)
     Q_CLASSINFO("DefaultProperty", "table")
 public:
     explicit QOrmObject();
@@ -32,6 +35,9 @@ public:
 
     QVariant primaryKey();
     QVariantList indexes();
+    QQmlComponent *tableComponent();
+
+    void setTableComponent(QQmlComponent *value);
 
     void loadChildren();
     void loadForeignKeys();
@@ -50,6 +56,7 @@ signals:
     void dirtChanged(bool value);
     void primaryKeyChanged(QVariant value);
     void indexesChanged();
+    void tableComponentChanged();
 
 private:
     void setAsLoaded();

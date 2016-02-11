@@ -1,6 +1,5 @@
 import QtQuick 2.3
 import QtQuick.Controls 1.2
-
 import QtQuick.Orm 1.0
 
 ApplicationWindow {
@@ -10,6 +9,9 @@ ApplicationWindow {
     title: qsTr("Hello World")
 
     Orm {
+        database: "rci_db"
+        user: "kbu9999"
+        password: "xtra2921"
         tables: [
             OrmMetaTable {
                 table: "Cliente"
@@ -19,7 +21,8 @@ ApplicationWindow {
                     //OrmForeingKey{ property: "servicio"; attributes: [ "idServicio" ] },
                     OrmMetaAttribute{ property: "dni"; attribute: "dni" }
                 ]
-                component: Cliente { }
+                component: Cliente {
+                }
             }
         ]
     }

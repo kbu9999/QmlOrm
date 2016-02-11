@@ -45,6 +45,7 @@ QOrmObject::~QOrmObject()
     }
     metaTable()->cache()->remove(this);
     blockSignals(false); //*/
+    delete d;
 }
 
 void QOrmObject::load(QVariant pk)
@@ -92,9 +93,7 @@ QOrmMetaTable *QOrmObject::qmlAttachedProperties(QObject *o)
     QOrmObject *obj = qobject_cast<QOrmObject*>(o);
     if (!obj) return NULL;
 
-    qDebug()<<"qmlattach:"<<o;
     QString type = o->metaObject()->className();
-
     auto orm = QOrm::defaultOrm();
     QOrmMetaTable *meta = orm->findTable(type);
     if (!meta) {
@@ -115,6 +114,16 @@ QVariant QOrmObject::primaryKey()
 QVariantList QOrmObject::indexes()
 {
     return d->indexes.toList();
+}
+
+QQmlComponent *QOrmObject::tableComponent()
+{
+
+}
+
+void QOrmObject::setTableComponent(QQmlComponent *value)
+{
+
 }
 
 bool QOrmObject::isSaved() const

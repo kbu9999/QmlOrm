@@ -6,11 +6,13 @@
 #include "qormmetaattribute.h"
 
 
-QOrm *QOrm::m_def = new QOrm();
+QOrm *QOrm::m_def = NULL;
 
 QOrm::QOrm() : QObject()
 {
     m_db = QSqlDatabase::addDatabase("QMYSQL");
+    if (!QOrm::m_def)
+        QOrm::m_def = this;
 }
 
 QString QOrm::database() const
@@ -95,6 +97,9 @@ void QOrm::setHost(QString value)
 
 QOrm *QOrm::defaultOrm()
 {
+    if (!m_def)
+        m_def = new QOrm();
+
     return m_def;
 }
 

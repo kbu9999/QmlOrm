@@ -28,7 +28,7 @@ class QOrmMetaTable : public QObject
     Q_PROPERTY(QQmlComponent* component READ component WRITE setComponent NOTIFY componentChanged)
     Q_CLASSINFO("DefaultProperty", "attributes")
 public:
-    QOrmMetaTable();
+    QOrmMetaTable(QObject *parent = 0);
     virtual ~QOrmMetaTable();
 
     QString database() const;

@@ -20,10 +20,11 @@ public:
     QList<QOrmMetaRelation*> rels;
 };
 
-QOrmMetaTable::QOrmMetaTable() :
-    QObject(),
+QOrmMetaTable::QOrmMetaTable(QObject *parent) :
+    QObject(parent),
     d(new Private())
 {
+    //qDebug()<<parent;
 }
 
 QOrmMetaTable::~QOrmMetaTable()
@@ -108,7 +109,6 @@ QQmlComponent *QOrmMetaTable::component() const
 
 void QOrmMetaTable::setTable(QString value)
 {
-    qDebug()<<d->table<<value;
     if (!d->table.isEmpty()) return;
 
     d->table = value;
@@ -158,6 +158,11 @@ void QOrmMetaTable::setSqlUpdate(QString value)
 void QOrmMetaTable::setComponent(QQmlComponent *value)
 {
     if (d->component == value) return;
+
+    auto obj = value->create();
+    QString type = obj->metaObject()->className();
+    delete obj;
+    QOrm::defaultOrm()->appendTable(type, this);
 
     d->component = value;
     emit componentChanged(value);
