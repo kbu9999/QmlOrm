@@ -5,10 +5,13 @@
 #include <QVariant>
 #include <QQmlComponent>
 #include <qqml.h>
+#include <QDebug>
+
 
 class QOrmMetaTable;
 
 class QOrmObject : public QObject
+
 {
     Q_OBJECT
     Q_PROPERTY(bool saved READ isSaved NOTIFY savedChanged)
@@ -17,8 +20,6 @@ class QOrmObject : public QObject
     Q_PROPERTY(bool dirt READ isDirt NOTIFY dirtChanged)
     Q_PROPERTY(QVariant primaryKey READ primaryKey NOTIFY primaryKeyChanged)
     Q_PROPERTY(QVariantList indexes READ indexes NOTIFY indexesChanged)
-    Q_PROPERTY(QQmlComponent* tableComponent READ tableComponent
-               WRITE setTableComponent NOTIFY tableComponentChanged CONSTANT FINAL)
     Q_CLASSINFO("DefaultProperty", "table")
 public:
     explicit QOrmObject();
@@ -35,15 +36,10 @@ public:
 
     QVariant primaryKey();
     QVariantList indexes();
-    QQmlComponent *tableComponent();
-
-    void setTableComponent(QQmlComponent *value);
 
     void loadChildren();
     void loadForeignKeys();
     void loadAllForeignKeys();
-
-    static QOrmMetaTable *qmlAttachedProperties(QObject *o);
 
 signals:
     void afterLoad();
@@ -56,7 +52,6 @@ signals:
     void dirtChanged(bool value);
     void primaryKeyChanged(QVariant value);
     void indexesChanged();
-    void tableComponentChanged();
 
 private:
     void setAsLoaded();
@@ -67,12 +62,9 @@ private:
     class Private;
     Private *d;
 
-    friend class QOrmAttributeInfo;
+    friend class QOrmMetaAttribute;
 };
 
-typedef QList<QOrmObject*> QOrmObjectList;
-
 QML_DECLARE_TYPE(QOrmObject)
-QML_DECLARE_TYPEINFO(QOrmObject, QML_HAS_ATTACHED_PROPERTIES)
 
 #endif // QORMOBJECT_H

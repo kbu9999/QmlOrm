@@ -2,7 +2,6 @@ import QtQuick 2.0
 import QtQuick.Orm 1.0
 
 import "DB"
-//import "MetaCliente.qml"
 
 OrmObject {
     property int idCliente : 0
@@ -14,7 +13,5 @@ OrmObject {
     property string direccion
     property int codpost: 0
     property string tel: "(381) "
-
-    tableComponent: MetaCliente
 }
 

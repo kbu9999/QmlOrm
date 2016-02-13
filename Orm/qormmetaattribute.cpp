@@ -1,5 +1,5 @@
 #include "qormmetaattribute.h"
-
+#include "qormobject.h"
 #include "qormmetatable.h"
 #include "qorm.h"
 
@@ -112,4 +112,12 @@ void QOrmMetaAttribute::setIsNullable(bool value)
 
     d->isNullable = value;
     emit isNullableChanged(value);
+}
+
+void QOrmMetaAttribute::modified()
+{
+    QOrmObject *o = qobject_cast<QOrmObject*>(sender());
+    qDebug()<<o;
+    if (!o) return;
+
 }

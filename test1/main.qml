@@ -10,6 +10,21 @@ ApplicationWindow {
     height: 480
     title: qsTr("Hello World")
 
+    Cliente {
+        id: cl
+    }
+    Cliente {
+    }
+
+    Component.onCompleted: {
+        /*var cmp = cl.tableComponent
+        var v = cmp.createObject();
+        console.log(v)
+        console.log(v.component.createObject()) //*/
+        console.log("+++"+MetaCliente.cmp)
+        console.log(MetaCliente.create())
+    }
+
     menuBar: MenuBar {
         Menu {
             title: qsTr("File")
@@ -25,17 +40,13 @@ ApplicationWindow {
     }
 
     Label {
+        id: txt
         text: qsTr("Hello World")
         anchors.centerIn: parent
 
         anchors {
             centerIn: parent
         }
-    }
-
-    Component.onCompleted: {
-        var obj = MetaCliente.createObject()
-        console.log(obj)
     }
 }
 

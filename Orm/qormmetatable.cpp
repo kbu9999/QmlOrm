@@ -1,5 +1,6 @@
 #include "qormmetatable.h"
-
+#include "qormmetaattribute.h"
+#include "qormobject.h"
 #include "qorm.h"
 
 #include <QtCore>
@@ -14,6 +15,7 @@ public:
     QString sqlDelete;
     QString sqlUpdate;
 
+    QUrl url;
     QQmlComponent *component;
 
     QList<QOrmMetaAttribute*> attrs;
@@ -21,10 +23,10 @@ public:
 };
 
 QOrmMetaTable::QOrmMetaTable(QObject *parent) :
-    //QObject(parent),
-    QQmlComponent(parent),
+    QObject(parent),
     d(new Private())
 {
+    d->component = 0;
 }
 
 QOrmMetaTable::~QOrmMetaTable()
@@ -77,34 +79,53 @@ QQmlListProperty<QOrmMetaRelation> QOrmMetaTable::relations()
     return QQmlListProperty<QOrmMetaRelation>();
 }
 
+QUrl QOrmMetaTable::url() const
+{
+    return d->url;
+}
+
 void QOrmMetaTable::connectAttributes(QOrmObject *obj)
 {
-    /*QMetaObject amo = obj->;
-    QMetaMethod mv = amo.method(amo.indexOfMethod("setValue()"));
+    const QMetaObject *amo = obj->metaObject();
+    /*QMetaMethod mv = amo.method(amo.indexOfMethod("setValue()"));
     QMetaMethod mi = amo.method(amo.indexOfMethod("setIndex()"));
-    QMetaMethod mf = amo.method(amo.indexOfMethod("setForeignkey()"));
-    for(QOrmAttributeInfo *a : d->attrs)
+    QMetaMethod mf = amo.method(amo.indexOfMethod("setForeignkey()")); */
+    for(QOrmMetaAttribute *a : d->attrs)
     {
         if (a->pos() < 0) continue;
 
-        int i = d->mobj->indexOfProperty(a->propertyName().toLatin1());
-        QMetaProperty prop = d->mobj->property(i);
+        int i = amo->indexOfProperty(a->property().toLatin1());
+        QMetaProperty prop = amo->property(i);
         if (!prop.hasNotifySignal()) continue;
 
-        if (a->isForeignKey())
-            d->mobj->connect(obj, prop.notifySignalIndex() - 2, a, mf.methodIndex());
-        else {
-            if (a->isPrimaryKey())
-                d->mobj->connect(obj, prop.notifySignalIndex() - 2, a, mi.methodIndex());
-            else
-                d->mobj->connect(obj, prop.notifySignalIndex() - 2, a, mv.methodIndex());
-        }
-    }*/
+        amo->connect(obj, prop.notifySignalIndex() - 2,
+                     a, a->metaObject()->indexOfMethod("modified()"));
+    }
 }
 
-QQmlComponent *QOrmMetaTable::component() const
+QQmlComponent *QOrmMetaTable::component()
 {
+    if (d->component) {
+        if (!d->component->isReady() && d->url.isValid()) {
+            delete d->component;
+            setComponent(new QQmlComponent(qmlEngine(this), d->url));
+        }
+    }
     return d->component;
+}
+
+QOrmObject *QOrmMetaTable::create()
+{
+    //qDebug()<<d->component;
+    if (!d->component) return NULL;
+
+    QOrmObject *o = qobject_cast<QOrmObject*>(d->component->create());
+    if (!o) {
+        delete o;
+        o = NULL;
+    }
+
+    return o;
 }
 
 void QOrmMetaTable::setTable(QString value)
@@ -159,11 +180,27 @@ void QOrmMetaTable::setComponent(QQmlComponent *value)
 {
     if (d->component == value) return;
 
-    auto obj = value->create();
-    QString type = obj->metaObject()->className();
-    delete obj;
-    QOrm::defaultOrm()->appendTable(type, this);
-
+    if (value->isReady()) {
+        QOrmObject *o = qobject_cast<QOrmObject*>(value->create());
+        if (o) {
+            QString type = o->metaObject()->className();
+            QOrm::defaultOrm()->appendTable(type, this);
+        }
+        delete o;
+    }
     d->component = value;
     emit componentChanged(value);
+}
+
+void QOrmMetaTable::setUrl(QUrl value)
+{
+    if (d->url == value) return;
+    if (d->component)
+        if (d->component->isReady())
+            return;
+
+    setComponent(new QQmlComponent(qmlEngine(this), d->url));
+
+    d->url = value;
+    emit urlChanged(d->url);
 }

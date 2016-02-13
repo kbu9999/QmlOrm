@@ -38,12 +38,10 @@ protected slots:
     void setIndex(int value);
     void setIsNullable(bool value);
 
-    void setValue();
-    void setIndex();
-    void setForeignkey();
+    virtual void modified();
 
 signals:
-    void posChanged (int);
+    void posChanged(int);
     void attributeChanged(QString);
     void propertyChanged(QString);
     void indexChanged(int);

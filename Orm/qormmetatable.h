@@ -13,21 +13,21 @@ class QOrmMetaAttribute;
 class QOrmMetaForeignKey;
 class QOrmMetaRelation;
 
-//class QOrmMetaTable : public QObject
-class QOrmMetaTable : public QQmlComponent
+class QOrmMetaTable : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString table READ table WRITE setTable NOTIFY tableChanged)
     Q_PROPERTY(QString database READ database WRITE setDatabase NOTIFY databaseChanged)
     Q_PROPERTY(QQmlListProperty<QOrmMetaAttribute> attributes READ attributes NOTIFY attributesChanged)
-    Q_PROPERTY(QQmlListProperty<QOrmMetaForeignKey> foreignkeys READ foreignkeys)
-    Q_PROPERTY(QQmlListProperty<QOrmMetaRelation> relations READ relations NOTIFY relationsChanged)
+    //Q_PROPERTY(QQmlListProperty<QOrmMetaForeignKey> foreignkeys READ foreignkeys)
+    //Q_PROPERTY(QQmlListProperty<QOrmMetaRelation> relations READ relations NOTIFY relationsChanged)
     Q_PROPERTY(QString sqlSelect READ sqlSelect WRITE setSqlSelect NOTIFY sqlSelectChanged)
     Q_PROPERTY(QString sqlInsert READ sqlInsert WRITE setSqlInsert NOTIFY sqlInsertChanged)
     Q_PROPERTY(QString sqlDelete READ sqlDelete WRITE setSqlDelete NOTIFY sqlDeleteChanged)
     Q_PROPERTY(QString sqlUpdate READ sqlUpdate WRITE setSqlUpdate NOTIFY sqlUpdateChanged)
-    //Q_PROPERTY(QQmlComponent* component READ component WRITE setComponent NOTIFY componentChanged)
-    //Q_CLASSINFO("DefaultProperty", "attributes")
+    Q_PROPERTY(QQmlComponent* cmp READ component WRITE setComponent NOTIFY componentChanged)
+    Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
+    Q_CLASSINFO("DefaultProperty", "attributes")
 public:
     QOrmMetaTable(QObject *parent = 0);
     virtual ~QOrmMetaTable();
@@ -44,7 +44,10 @@ public:
     QQmlListProperty<QOrmMetaForeignKey> foreignkeys();
     QQmlListProperty<QOrmMetaRelation> relations();
 
-    QQmlComponent *component() const;
+    QUrl url() const;
+    QQmlComponent *component();
+
+    Q_INVOKABLE QOrmObject *create();
 
 public slots:
     void setTable(QString value);
@@ -54,6 +57,7 @@ public slots:
     void setSqlDelete(QString value);
     void setSqlUpdate(QString value);
     void setComponent(QQmlComponent *value);
+    void setUrl(QUrl value);
 
 signals:
     void tableChanged(QString);
@@ -65,8 +69,9 @@ signals:
     void sqlDeleteChanged(QString);
     void sqlUpdateChanged(QString);
     void componentChanged(QQmlComponent *value);
+    void urlChanged(QUrl value);
 
-protected:
+public:
     void connectAttributes(QOrmObject *obj);
 
 private:

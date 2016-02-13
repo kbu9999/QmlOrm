@@ -29,6 +29,10 @@ QOrmObject::QOrmObject()  :
 {
     d->indexes = QVector<QVariant>();
     //metatable->connectAttributes(this);
+    QOrmMetaTable *meta = QOrm::defaultOrm()->findTable(metaObject()->className());
+    if (meta) {
+        meta->connectAttributes(this);
+    }
 }
 
 QOrmObject::~QOrmObject()
@@ -88,22 +92,6 @@ void QOrmObject::loadAllForeignKeys()
     //    d->loadFKs(this, metaTable()->foreignKey(i));
 }
 
-QOrmMetaTable *QOrmObject::qmlAttachedProperties(QObject *o)
-{
-    return NULL;
-    QOrmObject *obj = qobject_cast<QOrmObject*>(o);
-    if (!obj) return NULL;
-
-    QString type = o->metaObject()->className();
-    auto orm = QOrm::defaultOrm();
-    QOrmMetaTable *meta = orm->findTable(type);
-    if (!meta) {
-        meta = new QOrmMetaTable();
-        orm->appendTable(type, meta);
-    }
-    return meta;
-}
-
 QVariant QOrmObject::primaryKey()
 {
     if (d->indexes.isEmpty())
@@ -115,18 +103,6 @@ QVariant QOrmObject::primaryKey()
 QVariantList QOrmObject::indexes()
 {
     return d->indexes.toList();
-}
-
-QQmlComponent *QOrmObject::tableComponent()
-{
-}
-
-void QOrmObject::setTableComponent(QQmlComponent *value)
-{
-    //QOrmMetaTable *table = qobject_cast<QOrmMetaTable*>(value->create());
-    //if (!table) return;
-
-    qDebug()<<value;
 }
 
 bool QOrmObject::isSaved() const
