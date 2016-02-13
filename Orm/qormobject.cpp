@@ -90,6 +90,7 @@ void QOrmObject::loadAllForeignKeys()
 
 QOrmMetaTable *QOrmObject::qmlAttachedProperties(QObject *o)
 {
+    return NULL;
     QOrmObject *obj = qobject_cast<QOrmObject*>(o);
     if (!obj) return NULL;
 
@@ -118,12 +119,14 @@ QVariantList QOrmObject::indexes()
 
 QQmlComponent *QOrmObject::tableComponent()
 {
-
 }
 
 void QOrmObject::setTableComponent(QQmlComponent *value)
 {
+    //QOrmMetaTable *table = qobject_cast<QOrmMetaTable*>(value->create());
+    //if (!table) return;
 
+    qDebug()<<value;
 }
 
 bool QOrmObject::isSaved() const

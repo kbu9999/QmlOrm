@@ -21,10 +21,10 @@ public:
 };
 
 QOrmMetaTable::QOrmMetaTable(QObject *parent) :
-    QObject(parent),
+    //QObject(parent),
+    QQmlComponent(parent),
     d(new Private())
 {
-    //qDebug()<<parent;
 }
 
 QOrmMetaTable::~QOrmMetaTable()

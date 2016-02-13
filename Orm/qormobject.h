@@ -18,7 +18,7 @@ class QOrmObject : public QObject
     Q_PROPERTY(QVariant primaryKey READ primaryKey NOTIFY primaryKeyChanged)
     Q_PROPERTY(QVariantList indexes READ indexes NOTIFY indexesChanged)
     Q_PROPERTY(QQmlComponent* tableComponent READ tableComponent
-               WRITE setTableComponent NOTIFY tableComponentChanged)
+               WRITE setTableComponent NOTIFY tableComponentChanged CONSTANT FINAL)
     Q_CLASSINFO("DefaultProperty", "table")
 public:
     explicit QOrmObject();

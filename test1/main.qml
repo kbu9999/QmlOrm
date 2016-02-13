@@ -2,30 +2,13 @@ import QtQuick 2.3
 import QtQuick.Controls 1.2
 import QtQuick.Orm 1.0
 
+import "DB"
+
 ApplicationWindow {
     visible: true
     width: 640
     height: 480
     title: qsTr("Hello World")
-
-    Orm {
-        database: "rci_db"
-        user: "kbu9999"
-        password: "xtra2921"
-        tables: [
-            OrmMetaTable {
-                table: "Cliente"
-                database: "rci_db"
-                attributes:  [
-                    OrmMetaAttribute{ property: "idCliente"; attribute: "idCliente"; index: 0 },
-                    //OrmForeingKey{ property: "servicio"; attributes: [ "idServicio" ] },
-                    OrmMetaAttribute{ property: "dni"; attribute: "dni" }
-                ]
-                component: Cliente {
-                }
-            }
-        ]
-    }
 
     menuBar: MenuBar {
         Menu {
@@ -48,6 +31,11 @@ ApplicationWindow {
         anchors {
             centerIn: parent
         }
+    }
+
+    Component.onCompleted: {
+        var obj = MetaCliente.createObject()
+        console.log(obj)
     }
 }
 

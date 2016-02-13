@@ -1,4 +1,4 @@
-//pragma Singleton
+pragma Singleton
 import QtQuick 2.0
 import QtQuick.Orm 1.0
 
@@ -15,9 +15,14 @@ Orm {
                 //OrmForeingKey{ property: "servicio"; attributes: [ "idServicio" ] },
                 OrmMetaAttribute{ property: "dni"; attribute: "dni" }
             ]
+
             component: Cliente {
             }
         }
     ]
+
+    Component.onCompleted: {
+        console.log("comple")
+    }
 }
 

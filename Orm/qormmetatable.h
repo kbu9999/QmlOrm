@@ -13,7 +13,8 @@ class QOrmMetaAttribute;
 class QOrmMetaForeignKey;
 class QOrmMetaRelation;
 
-class QOrmMetaTable : public QObject
+//class QOrmMetaTable : public QObject
+class QOrmMetaTable : public QQmlComponent
 {
     Q_OBJECT
     Q_PROPERTY(QString table READ table WRITE setTable NOTIFY tableChanged)
@@ -25,8 +26,8 @@ class QOrmMetaTable : public QObject
     Q_PROPERTY(QString sqlInsert READ sqlInsert WRITE setSqlInsert NOTIFY sqlInsertChanged)
     Q_PROPERTY(QString sqlDelete READ sqlDelete WRITE setSqlDelete NOTIFY sqlDeleteChanged)
     Q_PROPERTY(QString sqlUpdate READ sqlUpdate WRITE setSqlUpdate NOTIFY sqlUpdateChanged)
-    Q_PROPERTY(QQmlComponent* component READ component WRITE setComponent NOTIFY componentChanged)
-    Q_CLASSINFO("DefaultProperty", "attributes")
+    //Q_PROPERTY(QQmlComponent* component READ component WRITE setComponent NOTIFY componentChanged)
+    //Q_CLASSINFO("DefaultProperty", "attributes")
 public:
     QOrmMetaTable(QObject *parent = 0);
     virtual ~QOrmMetaTable();

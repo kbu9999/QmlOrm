@@ -1,5 +1,4 @@
 module DB
 
-singleton RCIDB Database.qml
-Cliente 1.0 Cliente.qml
-Servicio 1.0 Servicio.qml
+#singleton   RCIDB DataBase.qml
+singleton   MetaCliente MetaCliente.qml

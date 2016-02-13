@@ -1,6 +1,9 @@
 import QtQuick 2.0
 import QtQuick.Orm 1.0
 
+import "DB"
+//import "MetaCliente.qml"
+
 OrmObject {
     property int idCliente : 0
     property Servicio servicio
@@ -12,12 +15,6 @@ OrmObject {
     property int codpost: 0
     property string tel: "(381) "
 
-    //database: "rci_db"
-
-    OrmObject.table: "Cliente"
-
-    Component.onCompleted: {
-        console.log(OrmObject.attributes.length)
-    }
+    tableComponent: MetaCliente
 }
 

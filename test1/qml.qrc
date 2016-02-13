@@ -1,8 +1,10 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
+        <file>DB/DataBase.qml</file>
+        <file>DB/qmldir</file>
+        <file>DB/MetaCliente.qml</file>
         <file>Cliente.qml</file>
         <file>Servicio.qml</file>
-        <file>DataBase.qml</file>
     </qresource>
 </RCC>

@@ -1,7 +1,10 @@
+pragma Singleton
 import QtQuick 2.0
 import QtQuick.Orm 1.0
 
-Component {
+//QtObject {
+//Component {
+    //property Component table:
     OrmMetaTable {
         table: "Cliente"
         database: "rci_db"
@@ -10,6 +13,9 @@ Component {
             //OrmForeingKey{ property: "servicio"; attributes: [ "idServicio" ] },
             OrmMetaAttribute{ property: "dni"; attribute: "dni" }
         ]
+        QtObject {
+            property int idCliente: -1
+        }
     }
-}
+//}
 
