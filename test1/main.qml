@@ -11,9 +11,9 @@ ApplicationWindow {
     title: qsTr("Hello World")
 
     Component.onCompleted: {
-        Orm.user = "root"
-        Orm.password = "raptor"
-        Orm.database = "RCInternet2"
+        Orm.user = "kbu9999"
+        Orm.password = "xtra2921"
+        Orm.database = "rci_db"
 
         Orm.connect();
         //save changed in db

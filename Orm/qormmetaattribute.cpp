@@ -147,27 +147,22 @@ bool QOrmMetaForeignKey::isForeingkey() const
 
 void QOrmMetaForeignKey::setValue(QOrmObject *obj, QVariant v)
 {
-    int i = obj->metaObject()->indexOfProperty(property().toLatin1());
-    if (i < 0) return;
+    if (!m_prop.isValid()) return;
 
-    for(QOrmMetaTable *t : QOrm::defaultOrm()->listTables()) {
-        //if (t->table() ==
-    }
-
-    QMetaProperty mp = obj->metaObject()->property(i);
-    QVariant fk = mp.read(obj);
-    if (fk.isNull()) {
-        QObject *v = mp.enclosingMetaObject()->newInstance();
-
-    }
-    QOrmObject *ofk = fk.value<QOrmObject*>();
+    bool b = false;
+    QOrmObject *ofk = QOrm::defaultOrm()->find(m_fktable, v);
+    if (ofk) b = true;
+    else ofk = fk.value<QOrmObject*>();
     if (!ofk) {
-        qDebug()<<"is not a OrmObject";
-        return;
+        qobject_cast<QOrmObject*>(m_prop.enclosingMetaObject()->newInstance());
+        b = true;
     }
 
     ofk->load(v);
-    mp.notifySignal().invoke(obj, Q_ARG(QObject*, ofk));
+    if (b)
+        m_prop.write(obj, ofk);
+    else
+        m_prop.notifySignal().invoke(obj, Q_ARG(QObject*, ofk));
 }
 
 void QOrmMetaForeignKey::modified()
@@ -190,4 +185,9 @@ void QOrmMetaForeignKey::setForeignTable(QString value)
 void QOrmMetaForeignKey::setForeignMeta(QOrmMetaTable *fkmeta)
 {
     m_fktable = fkmeta;
+}
+
+void QOrmMetaForeignKey::setMetaProperty(QMetaProperty mprop)
+{
+    m_prop = mprop;
 }

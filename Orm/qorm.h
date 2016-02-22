@@ -46,6 +46,9 @@ public slots:
     void connect();
     void commint();
 
+private:
+    void initFks(QOrmMetaTable *t);
+
 signals:
     void databaseChanged(QString);
     void userChanged(QString);

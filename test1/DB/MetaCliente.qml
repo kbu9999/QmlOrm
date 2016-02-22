@@ -4,7 +4,7 @@ import QtQuick.Orm 1.0
 
 OrmMetaTable {
     table: "Cliente"
-    database: "RCInternet2"
+    database: "rci_db"
     attributes:  [
         OrmMetaAttribute{ property: "idCliente"; attribute: "idCliente"; index: 0 },
         OrmMetaForeignKey{ property: "servicio"; attribute: "idServicio"; foreignTable: "Servicio" },

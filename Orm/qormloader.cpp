@@ -1,6 +1,7 @@
 #include "qormloader.h"
 #include "qormmetaattribute.h"
 #include "qormmetatable.h"
+#include "qorm.h"
 
 #include <QtSql>
 
@@ -20,11 +21,15 @@ static QList<QOrmObject*> fromQuery(QOrmLoader *ld, QSqlQuery q)
 
     while(q.next())
     {
-        obj =  (QOrmObject*)ld->component()->create();
+        QVariant pk = q.value(0);
+        obj = QOrm::defaultOrm()->find(ld->table(), pk);
+        if(!obj)
+            obj =  (QOrmObject*)ld->component()->create();
 
         obj->beforeLoad();
         obj->blockSignals(true); 
 
+        //TODO conectar señal loaded a cada propiedad de obj
         loadAttr(ld->table(), obj, q, row);
 
         obj->blockSignals(false);
@@ -146,6 +151,8 @@ void QOrmLoader::load()
         o->loadAllForeignKeys();
         o->afterLoad();
         o->setAsLoaded();
+
+        QOrm::defaultOrm()->append(o);
     }
 
     emit resultChanged();

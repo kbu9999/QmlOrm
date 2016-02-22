@@ -73,10 +73,12 @@ public:
     void setForeignTable(QString value);
 
     void setForeignMeta(QOrmMetaTable *fkmeta);
+    void setMetaProperty(QMetaProperty mprop);
 
 private:
     QString m_foreigntable;
     QOrmMetaTable *m_fktable;
+    QMetaProperty m_prop;
 };
 
 Q_DECLARE_METATYPE(QOrmMetaAttribute*)

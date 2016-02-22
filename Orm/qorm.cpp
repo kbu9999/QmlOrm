@@ -151,3 +151,31 @@ void QOrm::connect()
         if (t->d->sqlDelete.isEmpty()) t->d->sqlDelete = del.query(t);
     }
 }
+
+void QOrm::initFks(QOrmMetaTable *t)
+{
+    for(QOrmMetaAttribute *a : t->listAttributes())
+    {
+        QOrmMetaForeignKey *fk = qobject_cast<QOrmMetaForeignKey*>(a);
+        if (!fk) continue;
+
+        int i = obj->metaObject()->indexOfProperty(fk->property().toLatin1());
+        if (i < 0) continue;
+
+        QMetaProperty mp = obj->metaObject()->property(i);
+        const QMetaObject *qclass = mp.enclosingMetaObject();
+        if (!qclass) {
+            error(QString("fkinit: %2 is not a object").arg(mp.name()));
+            continue;
+        }
+        QOrmObject *ofk = qobject_cast<QOrmObject*>(mp.enclosingMetaObject()->newInstance());
+        if (!ofk) {
+            error(QString("fkinit: %1 is not a OrmObject").arg(mp.name()));
+            continue;
+        }
+
+        fk->setForeignMeta(ofk->table());
+        fk->setMetaProperty(mp);
+        delete ofk;
+    }
+}
