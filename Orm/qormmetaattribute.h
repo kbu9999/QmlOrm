@@ -5,6 +5,7 @@
 #include <QVariant>
 
 class QOrmObject;
+class QOrmMetaTable;
 
 class QOrmMetaAttribute : public QObject
 {
@@ -31,6 +32,8 @@ public:
     virtual bool isForeingkey() const;
     bool isNullable() const;
 
+    virtual void setValue(QOrmObject *obj, QVariant v);
+
 protected slots:
     void setPos(int value);
     void setAttribute(QString value);
@@ -54,6 +57,28 @@ private:
     Private *d;
 };
 
-Q_DECLARE_METATYPE(QOrmMetaAttribute*)
+class QOrmMetaForeignKey : public QOrmMetaAttribute
+{
+    Q_OBJECT
+    Q_PROPERTY(QString foreignTable READ foreignTable WRITE setForeignTable)
+public:
+    QOrmMetaForeignKey();
+    virtual ~QOrmMetaForeignKey();
 
+    bool isForeingkey() const;
+    void setValue(QOrmObject *obj, QVariant v);
+    void modified();
+
+    QString foreignTable() const;
+    void setForeignTable(QString value);
+
+    void setForeignMeta(QOrmMetaTable *fkmeta);
+
+private:
+    QString m_foreigntable;
+    QOrmMetaTable *m_fktable;
+};
+
+Q_DECLARE_METATYPE(QOrmMetaAttribute*)
+Q_DECLARE_METATYPE(QOrmMetaForeignKey*)
 #endif // QATTRIBUTEINFO_H

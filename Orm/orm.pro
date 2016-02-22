@@ -15,6 +15,8 @@ SOURCES += \
     qormobject.cpp \
     #qormloader.cpp \
     #qormsaver.cpp
+    private/qormqueryparser.cpp \
+    qormloader.cpp
 
 HEADERS += \
     orm_plugin.h \
@@ -24,6 +26,8 @@ HEADERS += \
     qormobject.h \
     #qormloader.h \
     #qormsaver.h
+    private/qormqueryparser.h \
+    qormloader.h
 
 DISTFILES = qmldir
 

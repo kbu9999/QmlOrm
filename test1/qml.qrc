@@ -6,5 +6,6 @@
         <file>DB/MetaCliente.qml</file>
         <file>Cliente.qml</file>
         <file>Servicio.qml</file>
+        <file>DB/MetaServicio.qml</file>
     </qresource>
 </RCC>

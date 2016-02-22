@@ -4,13 +4,17 @@ import QtQuick.Orm 1.0
 
 OrmMetaTable {
     table: "Cliente"
-    database: "rci_db"
+    database: "RCInternet2"
     attributes:  [
         OrmMetaAttribute{ property: "idCliente"; attribute: "idCliente"; index: 0 },
-        //OrmForeingKey{ property: "servicio"; attributes: [ "idServicio" ] },
-        OrmMetaAttribute{ property: "dni"; attribute: "dni" }
+        OrmMetaForeignKey{ property: "servicio"; attribute: "idServicio"; foreignTable: "Servicio" },
+        OrmMetaAttribute{ attribute: "dni" },
+        OrmMetaAttribute{ attribute: "nombre" },
+        OrmMetaAttribute{ attribute: "localidad" },
+        OrmMetaAttribute{ attribute: "barrio" },
+        OrmMetaAttribute{ attribute: "direccion" },
+        OrmMetaAttribute{ attribute: "codpost" },
+        OrmMetaAttribute{ property: "tel"; attribute: "telefono" }
     ]
-    //component: Component { url: "Cliente.qml" }
-    url: "../Cliente.qml"
 }
 

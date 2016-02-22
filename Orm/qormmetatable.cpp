@@ -3,6 +3,8 @@
 #include "qormobject.h"
 #include "qorm.h"
 
+#include "private/qormqueryparser.h"
+
 #include <QtCore>
 
 class QOrmMetaTable::Private
@@ -15,18 +17,14 @@ public:
     QString sqlDelete;
     QString sqlUpdate;
 
-    QUrl url;
-    QQmlComponent *component;
-
     QList<QOrmMetaAttribute*> attrs;
     QList<QOrmMetaRelation*> rels;
 };
 
-QOrmMetaTable::QOrmMetaTable(QObject *parent) :
-    QObject(parent),
+QOrmMetaTable::QOrmMetaTable() :
+    QOrmCache(),
     d(new Private())
 {
-    d->component = 0;
 }
 
 QOrmMetaTable::~QOrmMetaTable()
@@ -64,6 +62,11 @@ QString QOrmMetaTable::sqlDelete() const
     return d->sqlDelete;
 }
 
+QList<QOrmMetaAttribute *> QOrmMetaTable::listAttributes()
+{
+    return d->attrs;
+}
+
 QQmlListProperty<QOrmMetaAttribute> QOrmMetaTable::attributes()
 {
     return QQmlListProperty<QOrmMetaAttribute>(this, d->attrs);
@@ -79,17 +82,9 @@ QQmlListProperty<QOrmMetaRelation> QOrmMetaTable::relations()
     return QQmlListProperty<QOrmMetaRelation>();
 }
 
-QUrl QOrmMetaTable::url() const
-{
-    return d->url;
-}
-
 void QOrmMetaTable::connectAttributes(QOrmObject *obj)
 {
     const QMetaObject *amo = obj->metaObject();
-    /*QMetaMethod mv = amo.method(amo.indexOfMethod("setValue()"));
-    QMetaMethod mi = amo.method(amo.indexOfMethod("setIndex()"));
-    QMetaMethod mf = amo.method(amo.indexOfMethod("setForeignkey()")); */
     for(QOrmMetaAttribute *a : d->attrs)
     {
         if (a->pos() < 0) continue;
@@ -103,29 +98,13 @@ void QOrmMetaTable::connectAttributes(QOrmObject *obj)
     }
 }
 
-QQmlComponent *QOrmMetaTable::component()
+void QOrmMetaTable::classBegin()
 {
-    if (d->component) {
-        if (!d->component->isReady() && d->url.isValid()) {
-            delete d->component;
-            setComponent(new QQmlComponent(qmlEngine(this), d->url));
-        }
-    }
-    return d->component;
 }
 
-QOrmObject *QOrmMetaTable::create()
+void QOrmMetaTable::componentComplete()
 {
-    //qDebug()<<d->component;
-    if (!d->component) return NULL;
-
-    QOrmObject *o = qobject_cast<QOrmObject*>(d->component->create());
-    if (!o) {
-        delete o;
-        o = NULL;
-    }
-
-    return o;
+    QOrm::defaultOrm()->appendTable(this);
 }
 
 void QOrmMetaTable::setTable(QString value)
@@ -176,31 +155,35 @@ void QOrmMetaTable::setSqlUpdate(QString value)
     emit sqlUpdateChanged(value);
 }
 
-void QOrmMetaTable::setComponent(QQmlComponent *value)
-{
-    if (d->component == value) return;
 
-    if (value->isReady()) {
-        QOrmObject *o = qobject_cast<QOrmObject*>(value->create());
-        if (o) {
-            QString type = o->metaObject()->className();
-            QOrm::defaultOrm()->appendTable(type, this);
-        }
-        delete o;
-    }
-    d->component = value;
-    emit componentChanged(value);
+QOrmObject *QOrmCache::find(QVariant pk)
+{
+    if (pk.isNull()) return NULL;
+
+    auto i = m_cache.find(pk);
+    if (i == m_cache.end()) return NULL;
+
+    return i.value();
 }
 
-void QOrmMetaTable::setUrl(QUrl value)
+void QOrmCache::append(QOrmObject *obj)
 {
-    if (d->url == value) return;
-    if (d->component)
-        if (d->component->isReady())
-            return;
+    if (!obj) return;
+    if (!obj->isSaved() || obj->isDeleted()) return;
 
-    setComponent(new QQmlComponent(qmlEngine(this), d->url));
+    QVariant pk = obj->primaryKey();
+    if (pk.isNull()) return;
 
-    d->url = value;
-    emit urlChanged(d->url);
+    m_cache[pk] = obj;
+    connect(obj, &QObject::destroyed, this, &QOrmCache::remove);
+}
+
+void QOrmCache::remove(QObject *obj)
+{
+    for (auto i = m_cache.begin(); i != m_cache.end(); ++i) {
+        if (i.value() == obj) {
+            m_cache.erase(i);
+            break;
+        }
+    }
 }

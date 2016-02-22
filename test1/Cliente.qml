@@ -13,5 +13,7 @@ OrmObject {
     property string direccion
     property int codpost: 0
     property string tel: "(381) "
+
+    table: MetaCliente
 }
 

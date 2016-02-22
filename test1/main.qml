@@ -10,27 +10,35 @@ ApplicationWindow {
     height: 480
     title: qsTr("Hello World")
 
-    Cliente {
-        id: cl
-    }
-    Cliente {
+    Component.onCompleted: {
+        Orm.user = "root"
+        Orm.password = "raptor"
+        Orm.database = "RCInternet2"
+
+        Orm.connect();
+        //save changed in db
+        //Orm.commit()
+
+        ld.load()
     }
 
-    Component.onCompleted: {
-        /*var cmp = cl.tableComponent
-        var v = cmp.createObject();
-        console.log(v)
-        console.log(v.component.createObject()) //*/
-        console.log("+++"+MetaCliente.cmp)
-        console.log(MetaCliente.create())
+    Connections{
+        target: Orm
+        onError: console.log(error)
+    }
+
+    OrmLoader {
+        id: ld
+        component: Cliente { }
+        //query:
     }
 
     menuBar: MenuBar {
         Menu {
             title: qsTr("File")
             MenuItem {
-                text: qsTr("&Open")
-                onTriggered: console.log("Open action triggered");
+                text: qsTr("&Load")
+                onTriggered: ld.load()
             }
             MenuItem {
                 text: qsTr("Exit")
@@ -39,13 +47,44 @@ ApplicationWindow {
         }
     }
 
-    Label {
-        id: txt
-        text: qsTr("Hello World")
-        anchors.centerIn: parent
+    property Cliente cl: Cliente{ }
 
-        anchors {
-            centerIn: parent
+    Rectangle {
+        x: 300
+        width: 200
+        height: 80
+        color: "purple"
+        Text {
+            text: cl.dni + " : "+cl.nombre
+            font.bold: true
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            anchors.fill: parent
+        }
+    }
+
+    ListView {
+        anchors.fill: parent
+        model: ld.result
+        delegate: Rectangle {
+            width: 200; height: 80
+            color: "yellow"
+
+            Text {
+                text: dni + " : "+nombre
+                font.bold: true
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                anchors.fill: parent
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    cl = ld.result[index]
+                    ld.clearResult()
+                }
+            }
         }
     }
 }

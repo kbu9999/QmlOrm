@@ -1,106 +1,54 @@
-#ifndef QORMLOADER_H
-#define QORMLOADER_H
+#ifndef ORMLOADER_H
+#define ORMLOADER_H
 
-#include <qorm_global.h>
-#include "qormtableinfo.h"
-#include "qormattributeinfo.h"
+#include <qormobject.h>
 
-#include <QOrmObject>
-#include <QVariantList>
-
-template <class T> class QOrmLoader;
-class QOrmBasicLoaderPrivate;
-
-class QOrmFunction : public QPair<QString, QVariant>
+class QOrmLoader : public QObject
 {
+    Q_OBJECT
+    Q_PROPERTY(QQmlComponent* component READ component WRITE setComponent NOTIFY componentChanged)
+    Q_PROPERTY(QString query READ query WRITE setQuery NOTIFY queryChanged)
+    Q_PROPERTY(QQmlListProperty<QOrmObject> result READ result NOTIFY resultChanged)
+    Q_PROPERTY(QVariantMap bindValues READ bindValues WRITE setBindValues NOTIFY bindValuesChanged)
 public:
-    QOrmFunction();
-    QOrmFunction(QString func, QVariant v = QVariant());
+    explicit QOrmLoader(QObject *parent = 0);
 
-    operator QVariant() const;
-};
+    QOrmMetaTable *table() const;
 
-class QOrmBasicLoader
-{
-public:
-    QOrmBasicLoader(QOrmTableInfo *table);
+    QQmlComponent *component() const;
+    void setComponent(QQmlComponent *value);
 
-    bool needParent() const;
-    QOrmTableInfo *metaTable() const;
+    QString query() const;
+    void setQuery(QString value);
 
-    enum LoadPolicy { Single, AllForeignKeys };
-    LoadPolicy loadPolicy() const;
-    void setLoadPolicy(LoadPolicy pol);
+    QVariantMap bindValues() const;
+    void setBindValues(QVariantMap value);
 
-    void where(QVariant v1, QVariant v2, QString op = "=");
-    void andWhere(QVariant v1, QVariant v2, QString op = "=");
-    void orWhere(QVariant v1, QVariant v2, QString op = "=");
-    void between(QVariant prop, QVariant start, QVariant end);
-
-    void whereForeignKey(QOrmTableInfo *table, QOrmObject *obj);
-    template <class TParent> void whereForeignKey() { whereForeignKey( TParent::staticMetaTable, 0); }
-    template <class TParent> void whereForeignKey(TParent *parent) { whereForeignKey( TParent::staticMetaTable, parent); }
-
-    void whereParent(QOrmTableInfo *table, QOrmObject *obj);
-    template <class TParent> void whereParent() { whereParent( TParent::staticMetaTable, 0); }
-    template <class TParent> void whereParent(TParent* parent) { whereParent( TParent::staticMetaTable, parent); }
-
-    void bindValue(QOrmObject *obj);
-    void bindValue(QOrmAttributeInfo attr, QVariant v);
-
-    void from(QString view);
-    void naturalJoin(QString view);
-    void naturalJoin(QOrmTableInfo *table);
-    template <class TJoin> void naturalJoin() { naturalJoin(TJoin::staticMetaTable); }
-    void order(QOrmAttributeInfo by, bool asc = true);
-
-    void setQuery(QString query);
-    QString query();
-    void clear();
-
-    QList<QOrmObject*> loadAll(int limit = 0);
-    QOrmObject* load(QVariant pk);
-
-    template <class TParent, class TChild>
-    static QOrmLoader<TChild> *QOrmRelation1N(QOrmBasicLoader::LoadPolicy policy = QOrmBasicLoader::Single);
-
-    template <class TParent, class TFK>
-    static QOrmLoader<TFK> *QOrmRelation11(QOrmBasicLoader::LoadPolicy policy = QOrmBasicLoader::Single);
+    QList<QOrmObject *> listResult() const;
 
 private:
-    QOrmBasicLoaderPrivate *d;
+    QQmlListProperty<QOrmObject> result();
+
+signals:
+    void componentChanged(QQmlComponent *value);
+    void queryChanged(QString value);
+    void resultChanged();
+    void bindValuesChanged(QVariantMap value);
+    void error(QString error);
+
+public slots:
+    void load();
+    void clearResult();
+    void clearBindValues();
+    void addBindValue(QString name, QVariant value);
+    void addBindObject(QOrmObject *obj);
+
+private:
+    QOrmMetaTable *m_meta;
+    QQmlComponent *m_component;
+    QString m_query;
+    QList<QOrmObject *> m_result;
+    QVariantMap m_bindvalues;
 };
 
-template <class T>
-class QOrmLoader : public QOrmBasicLoader
-{
-public:
-    QOrmLoader() : QOrmBasicLoader(T::staticMetaTable) { }
-
-    inline QList<T*> loadAll() { return QtOrm::list_cast<T>(QOrmBasicLoader::loadAll()); }
-    inline T* load(QVariant pk) { return qobject_cast<T*>(QOrmBasicLoader::load(pk)); }
-
-    static T* loadOne(QVariant pk) { QOrmLoader<T> ld; return ld.load(pk); }
-};
-
-template <class TParent, class TChild>
-QOrmLoader<TChild> *QOrmBasicLoader::QOrmRelation1N(QOrmBasicLoader::LoadPolicy policy)
-{
-    QOrmLoader<TChild> *ld = new QOrmLoader<TChild>();
-    ld->setLoadPolicy(policy);
-    ((QOrmBasicLoader*)ld)->whereParent<TParent>();
-    return ld;
-}
-
-template <class TParent, class TFK>
-QOrmLoader<TFK> *QOrmBasicLoader::QOrmRelation11(QOrmBasicLoader::LoadPolicy policy)
-{
-    QOrmLoader<TFK> *ld = new QOrmLoader<TFK>();
-    ld->setLoadPolicy(policy);
-    ((QOrmBasicLoader*)ld)->whereForeignKey<TParent>();
-    return ld;
-}
-
-Q_DECLARE_METATYPE(QOrmFunction)
-
-#endif // QORMLOADER_H
+#endif // ORMLOADER_H

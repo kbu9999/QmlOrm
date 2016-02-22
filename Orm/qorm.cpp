@@ -4,7 +4,22 @@
 
 #include "qormmetatable.h"
 #include "qormmetaattribute.h"
+#include "qormobject.h"
+#include "private/qormqueryparser.h"
 
+class QOrmMetaTable::Private
+{
+public:
+    QString table;
+    QString database;
+    QString sqlSelect;
+    QString sqlInsert;
+    QString sqlDelete;
+    QString sqlUpdate;
+
+    QList<QOrmMetaAttribute*> attrs;
+    QList<QOrmMetaRelation*> rels;
+};
 
 QOrm *QOrm::m_def = NULL;
 
@@ -35,27 +50,32 @@ QString QOrm::host() const
     return m_db.hostName();
 }
 
-QOrmMetaTable *QOrm::findTable(QString type)
+void QOrm::appendTable(QOrmMetaTable *t)
 {
-    return m_mapTables.value(type, NULL);
-}
+    if (m_tables.contains(t)) return;
 
-void QOrm::appendTable(QString type, QOrmMetaTable *t)
-{
-    if (m_mapTables.contains(type)) return;
-
-    m_mapTables.insert(type, t);
-    m_tables = m_mapTables.values();
-
+    m_tables.append(t);
     emit tablesChanged();
 }
 
-void QOrm::removeTable(QString type)
+void QOrm::removeTable(QOrmMetaTable *t)
 {
-    if (m_mapTables.contains(type)) return;
+    if (!m_tables.contains(t)) return;
 
-    m_mapTables.remove(type);
+    m_tables.removeOne(t);
     emit tablesChanged();
+}
+
+QOrmObject *QOrm::find(QOrmMetaTable *table, QVariant pk)
+{
+    return table->find(pk);
+}
+
+void QOrm::append(QOrmObject *obj)
+{
+    if (!obj) return;
+
+    obj->table()->append(obj);
 }
 
 QQmlListProperty<QOrmMetaTable> QOrm::tables()
@@ -95,6 +115,11 @@ void QOrm::setHost(QString value)
     emit hostChanged(value);
 }
 
+QList<QOrmMetaTable *> QOrm::listTables() const
+{
+    return m_tables;
+}
+
 QOrm *QOrm::defaultOrm()
 {
     if (!m_def)
@@ -105,5 +130,24 @@ QOrm *QOrm::defaultOrm()
 
 void QOrm::connect()
 {
-    m_db.open();
+    if (m_db.isOpen()) return;
+
+    if (!m_db.open()) {
+        emit error(m_db.lastError().text());
+        return;
+    }
+
+    QOrmSelectParser sl;
+    QOrmInsertParser ins;
+    QOrmUpdateParser upd;
+    QOrmDeleteParser del;
+
+    QMap<QString, QOrmMetaTable*> map;
+    foreach (QOrmMetaTable *t, m_tables)
+    {
+        if (t->d->sqlSelect.isEmpty()) t->d->sqlSelect = sl.query(t);
+        if (t->d->sqlInsert.isEmpty()) t->d->sqlInsert = ins.query(t);
+        if (t->d->sqlUpdate.isEmpty()) t->d->sqlUpdate = upd.query(t);
+        if (t->d->sqlDelete.isEmpty()) t->d->sqlDelete = del.query(t);
+    }
 }

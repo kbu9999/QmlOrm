@@ -17,9 +17,10 @@ class QOrmObject::Private
 public:
     QVector<QVariant> indexes;
     bool empty, saved, deleted, dirt;
-
+    QOrmMetaTable *table;
     Private() :
-        empty(true), saved(false), deleted(false), dirt(false)
+        empty(true), saved(false), deleted(false), dirt(false),
+        table(0)
     {
     }
 };
@@ -28,11 +29,6 @@ QOrmObject::QOrmObject()  :
     d(new Private())
 {
     d->indexes = QVector<QVariant>();
-    //metatable->connectAttributes(this);
-    QOrmMetaTable *meta = QOrm::defaultOrm()->findTable(metaObject()->className());
-    if (meta) {
-        meta->connectAttributes(this);
-    }
 }
 
 QOrmObject::~QOrmObject()
@@ -49,6 +45,7 @@ QOrmObject::~QOrmObject()
     }
     metaTable()->cache()->remove(this);
     blockSignals(false); //*/
+    qDebug()<<this->metaObject()->className()<<"deleted";
     delete d;
 }
 
@@ -76,6 +73,20 @@ void QOrmObject::clear()
     emit savedChanged(d->saved);
     emit dirtChanged(d->dirt);
     emit emptyChanged(d->empty);
+}
+
+QOrmMetaTable *QOrmObject::table() const
+{
+    return d->table;
+}
+
+void QOrmObject::setTable(QOrmMetaTable *value)
+{
+    if (d->table) return;
+
+    d->table = value;
+    d->table->connectAttributes(this);
+    emit tableChanged(d->table);
 }
 
 void QOrmObject::loadChildren()

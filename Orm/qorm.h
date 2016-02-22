@@ -5,6 +5,7 @@
 #include <QtQml>
 #include <QSqlDatabase>
 
+class QOrmObject;
 class QOrmMetaTable;
 
 class QOrm : public QObject
@@ -20,25 +21,30 @@ public:
     QOrm();
 
     QString database() const;
-    QString user() const;
-    QString password() const;
-    QString host() const;
-
-    QOrmMetaTable *findTable(QString type);
-    QList<QOrmMetaTable *> listTables() const;
-    void appendTable(QString type, QOrmMetaTable *t);
-    void removeTable(QString type);
-    QQmlListProperty<QOrmMetaTable> tables();
-
     void setDatabase(QString value);
+
+    QString user() const;
     void setUser(QString value);
+
+    QString password() const;
     void setPassword(QString value);
+
+    QString host() const;
     void setHost(QString value);
+
+    QList<QOrmMetaTable *> listTables() const;
+    QQmlListProperty<QOrmMetaTable> tables();
+    void appendTable(QOrmMetaTable *t);
+    void removeTable(QOrmMetaTable *t);
+
+    QOrmObject *find(QOrmMetaTable *table, QVariant pk);
+    void append(QOrmObject *obj);
 
     static QOrm *defaultOrm();
 
 public slots:
     void connect();
+    void commint();
 
 signals:
     void databaseChanged(QString);
@@ -46,12 +52,11 @@ signals:
     void passwordChanged(QString);
     void hostChanged(QString);
     void tablesChanged();
-    void error(QString);
+    void error(QString error);
     void connected();
 
 private:
     QSqlDatabase m_db;
-    QMap<QString, QOrmMetaTable*> m_mapTables;
     QList<QOrmMetaTable*> m_tables;
 
     static QOrm * m_def;

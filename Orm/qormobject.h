@@ -11,9 +11,9 @@
 class QOrmMetaTable;
 
 class QOrmObject : public QObject
-
 {
     Q_OBJECT
+    Q_PROPERTY(QOrmMetaTable* table READ table WRITE setTable NOTIFY tableChanged)
     Q_PROPERTY(bool saved READ isSaved NOTIFY savedChanged)
     Q_PROPERTY(bool deleted READ isDeleted NOTIFY deletedChanged)
     Q_PROPERTY(bool empty READ isEmpty NOTIFY emptyChanged)
@@ -28,6 +28,9 @@ public:
     Q_INVOKABLE void load(QVariant pk);
     Q_INVOKABLE void save();
     Q_INVOKABLE void clear();
+
+    QOrmMetaTable *table() const;
+    void setTable(QOrmMetaTable *value);
 
     bool isSaved() const;
     bool isDeleted() const;
@@ -46,6 +49,7 @@ signals:
     void beforeLoad();
     void loaded(bool status);
     void saved();
+    void tableChanged(QOrmMetaTable *value);
     void savedChanged(bool value);
     void deletedChanged(bool value);
     void emptyChanged(bool value);
@@ -63,6 +67,7 @@ private:
     Private *d;
 
     friend class QOrmMetaAttribute;
+    friend class QOrmLoader;
 };
 
 QML_DECLARE_TYPE(QOrmObject)
