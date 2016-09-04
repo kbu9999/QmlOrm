@@ -4,30 +4,93 @@
 
 #include "qormmetatable.h"
 #include "qormmetaattribute.h"
+#include "qormmetaforeignkey.h"
+#include "qormmetarelation.h"
 #include "qormobject.h"
+#include "private/qormmetatable_p.h"
 #include "private/qormqueryparser.h"
 
-class QOrmMetaTable::Private
-{
-public:
-    QString table;
-    QString database;
-    QString sqlSelect;
-    QString sqlInsert;
-    QString sqlDelete;
-    QString sqlUpdate;
+#include <QPair>
 
-    QList<QOrmMetaAttribute*> attrs;
-    QList<QOrmMetaRelation*> rels;
-};
+typedef QPair<QOrmObject*, QVariant> Pair;
 
-QOrm *QOrm::m_def = NULL;
+static bool execQuery(QSqlQuery *q, QOrmMetaTable *t, QOrmObject *o) {
+    for(QOrmMetaAttribute *attr : t->listAttributes()) {
+        QString e = ":" + attr->attribute().replace(" ", "_");
+        if (attr->isIndex())
+            q->bindValue(e, o->indexes().at(attr->index()));
+        else
+            q->bindValue(e, o->property(attr->property().toLatin1()));
+    }
+
+    return q->exec();
+}
+
+static void find_dependencies(QOrm *db, QOrmMetaTable *v) {
+    for(QOrmMetaForeignKey *fka : v->listForeignkeys()) {
+        if (fka->foreignKeyMetaTable()) continue;
+
+        QOrmMetaTable *mfk = db->findTable(fka->foreignTable());
+        if (!mfk) continue;
+
+        fka->setForeignKeyMetaTable(mfk);
+    }
+
+    for(QOrmMetaRelation *r : v->listRelations()) {
+        if (r->relationMetaTable()) continue;
+
+        QOrmMetaTable *rmt = db->findTable(r->relationTableName());
+        if (!rmt) continue;
+
+        for(QOrmMetaForeignKey *fka : rmt->listForeignkeys()) {
+            //qDebug()<<t->table()<<fka->foreignTable()<<rmt->table();
+            if (v->table() == fka->foreignTable()) {
+                r->setRelationMetaTable(rmt, fka);
+            }
+        }
+    }
+}
+
+//QOrm *QOrm::m_def = NULL;
 
 QOrm::QOrm() : QObject()
 {
+    m_started = false;
     m_db = QSqlDatabase::addDatabase("QMYSQL");
-    if (!QOrm::m_def)
-        QOrm::m_def = this;
+}
+
+void QOrm::classBegin()
+{
+}
+
+void QOrm::componentComplete()
+{
+    QOrmSelectParser sl;
+    QOrmInsertParser ins;
+    QOrmUpdateParser upd;
+    QOrmDeleteParser del;
+
+    for (auto t : m_tables) {
+        if (!t)  continue;
+
+        t->setDatabase(this);
+        t->setDatabaseName(database());
+
+        if (t->d->sqlSelect.isEmpty()) t->d->sqlSelect = sl.query(t);
+        if (t->d->sqlInsert.isEmpty()) t->d->sqlInsert = ins.query(t);
+        if (t->d->sqlUpdate.isEmpty()) t->d->sqlUpdate = upd.query(t);
+        if (t->d->sqlDelete.isEmpty()) t->d->sqlDelete = del.query(t);
+    }
+
+    for (auto t : m_tables) {
+        if (!t)  continue;
+        find_dependencies(this, t);
+    }
+}
+
+bool QOrm::connected() const
+{
+    return m_db.isOpen();
 }
 
 QString QOrm::database() const
@@ -50,20 +113,12 @@ QString QOrm::host() const
     return m_db.hostName();
 }
 
-void QOrm::appendTable(QOrmMetaTable *t)
+QOrmMetaTable *QOrm::findTable(QString tableName)
 {
-    if (m_tables.contains(t)) return;
-
-    m_tables.append(t);
-    emit tablesChanged();
-}
-
-void QOrm::removeTable(QOrmMetaTable *t)
-{
-    if (!m_tables.contains(t)) return;
-
-    m_tables.removeOne(t);
-    emit tablesChanged();
+    for(auto i = m_tables.begin(); i != m_tables.end(); ++i) {
+        if ((*i)->table() == tableName) return (*i);
+    }
+    return NULL;
 }
 
 QOrmObject *QOrm::find(QOrmMetaTable *table, QVariant pk)
@@ -71,11 +126,32 @@ QOrmObject *QOrm::find(QOrmMetaTable *table, QVariant pk)
     return table->find(pk);
 }
 
-void QOrm::append(QOrmObject *obj)
+/*void QOrm::append(QOrmObject *obj)
 {
     if (!obj) return;
 
-    obj->table()->append(obj);
+    if (!obj->metaTable()) {
+        obj->setMetaTable(findTable(obj->tableName()));
+    }
+
+    auto t = obj->metaTable();
+    if (!t) return;
+
+    t->append(obj);
+    /*for(QOrmMetaRelation *r : t->listRelations()) {
+        for(QOrmObject *o : r->toList(obj)) {
+            if (o->metaTable()) o->metaTable()->append(o);
+        }
+    } //*/
+//}*/
+
+void QOrm::deleted(QOrmObject *obj)
+{
+    if (!obj) return;
+    auto t = obj->metaTable();
+    if (!t) return;
+
+    //TODO
 }
 
 QQmlListProperty<QOrmMetaTable> QOrm::tables()
@@ -120,16 +196,63 @@ QList<QOrmMetaTable *> QOrm::listTables() const
     return m_tables;
 }
 
-QOrm *QOrm::defaultOrm()
+void QOrm::newError(QString context, QString msg)
 {
-    if (!m_def)
-        m_def = new QOrm();
-
-    return m_def;
+    emit error(context +": " + msg);
 }
 
-void QOrm::connect()
+void QOrm::start_transaction()
 {
+    if (m_started) m_db.rollback();
+
+    m_started = true;
+    qDebug()<<"start transaction: "<<m_db.transaction();
+}
+
+void QOrm::end_transaction(bool exec)
+{
+    m_started = false;
+    if (exec) m_db.commit();
+    else m_db.rollback();
+}
+
+void QOrm::append(QOrmObject *obj)
+{
+    if (!obj) return;
+    if (!obj->metaTable()) return;
+
+    obj->metaTable()->append(obj);
+}
+
+#include <QJsonArray>
+
+QVariantList QOrm::exec(QString query, QVariantMap data)
+{
+    QSqlQuery q;
+    q.prepare(query);
+    for(auto i = data.begin(); i != data.end(); i++)
+        q.bindValue(":"+i.key(), i.value());
+
+    if (!q.exec()) return QVariantList();
+    QSqlRecord r = q.record();
+    QJsonArray a;
+    while(q.next()) {
+        QJsonObject o;
+        for(int i = 0; i < r.count(); i++)
+           o.insert(r.fieldName(i),  QJsonValue::fromVariant(q.value(i)));
+
+        a.append(o);
+    }
+
+    return a.toVariantList();
+}
+
+void QOrm::connect(QString user, QString pass, QString db, QString host)
+{
+    if (!user.isEmpty()) setUser(user);
+    if (!pass.isEmpty()) setPassword(pass);
+    if (!db.isEmpty()) setDatabase(db);
+    if (!host.isEmpty()) setHost(host);
     if (m_db.isOpen()) return;
 
     if (!m_db.open()) {
@@ -137,45 +260,5 @@ void QOrm::connect()
         return;
     }
 
-    QOrmSelectParser sl;
-    QOrmInsertParser ins;
-    QOrmUpdateParser upd;
-    QOrmDeleteParser del;
-
-    QMap<QString, QOrmMetaTable*> map;
-    foreach (QOrmMetaTable *t, m_tables)
-    {
-        if (t->d->sqlSelect.isEmpty()) t->d->sqlSelect = sl.query(t);
-        if (t->d->sqlInsert.isEmpty()) t->d->sqlInsert = ins.query(t);
-        if (t->d->sqlUpdate.isEmpty()) t->d->sqlUpdate = upd.query(t);
-        if (t->d->sqlDelete.isEmpty()) t->d->sqlDelete = del.query(t);
-    }
-}
-
-void QOrm::initFks(QOrmMetaTable *t)
-{
-    for(QOrmMetaAttribute *a : t->listAttributes())
-    {
-        QOrmMetaForeignKey *fk = qobject_cast<QOrmMetaForeignKey*>(a);
-        if (!fk) continue;
-
-        int i = obj->metaObject()->indexOfProperty(fk->property().toLatin1());
-        if (i < 0) continue;
-
-        QMetaProperty mp = obj->metaObject()->property(i);
-        const QMetaObject *qclass = mp.enclosingMetaObject();
-        if (!qclass) {
-            error(QString("fkinit: %2 is not a object").arg(mp.name()));
-            continue;
-        }
-        QOrmObject *ofk = qobject_cast<QOrmObject*>(mp.enclosingMetaObject()->newInstance());
-        if (!ofk) {
-            error(QString("fkinit: %1 is not a OrmObject").arg(mp.name()));
-            continue;
-        }
-
-        fk->setForeignMeta(ofk->table());
-        fk->setMetaProperty(mp);
-        delete ofk;
-    }
+    emit connectedChanged(true);
 }

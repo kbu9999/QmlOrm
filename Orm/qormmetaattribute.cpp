@@ -2,6 +2,7 @@
 #include "qormobject.h"
 #include "qormmetatable.h"
 #include "qorm.h"
+#include "qormloader.h"
 
 #include <QtCore>
 
@@ -13,8 +14,11 @@ public:
     QString property;
     int index;
     bool isNullable;
+    bool readonly;
 
     bool valid;
+
+    bool onLoad;
 };
 
 QOrmMetaAttribute::QOrmMetaAttribute() :
@@ -26,6 +30,10 @@ QOrmMetaAttribute::QOrmMetaAttribute() :
     d->pos = -1;
     d->index = -1;
     d->isNullable = false;
+
+    d->readonly = false;
+
+    d->onLoad = false;
 }
 
 QOrmMetaAttribute::~QOrmMetaAttribute()
@@ -73,12 +81,40 @@ bool QOrmMetaAttribute::isNullable() const
     return d->isNullable;
 }
 
+bool QOrmMetaAttribute::readOnly() const
+{
+    return d->readonly;
+}
+
+void QOrmMetaAttribute::blockOnLoad()
+{
+    d->onLoad = true;
+}
+
+void QOrmMetaAttribute::unBlockOnLoad()
+{
+    d->onLoad = false;
+}
+
 void QOrmMetaAttribute::setValue(QOrmObject *obj, QVariant v)
 {
-    obj->setProperty(d->property.toLatin1(), v);
+    QQmlProperty p(obj, property(), qmlContext(obj));
+    blockOnLoad();
+    p.write(v);
+    unBlockOnLoad();
 
-    //modificar lista de propiedades modificadas del obj
-    //modificar indices del obj
+    //TODO modificar lista de propiedades modificadas del obj
+    if (d->index < 0) return;
+
+    obj->setIndexValue(d->index, v);
+}
+
+void QOrmMetaAttribute::modified(QOrmObject *obj)
+{
+    if (d->index < 0) return;
+
+    QQmlProperty p(obj, property(), qmlContext(obj));
+    obj->setIndexValue(d->index, p.read());
 }
 
 void QOrmMetaAttribute::setPos(int value)
@@ -124,70 +160,20 @@ void QOrmMetaAttribute::setIsNullable(bool value)
     emit isNullableChanged(value);
 }
 
-void QOrmMetaAttribute::modified()
+void QOrmMetaAttribute::setReadOnly(bool value)
 {
+    if (d->readonly == value) return;
+    d->readonly = value;
+    emit readOnlyChanged(d->readonly);
+}
+
+void QOrmMetaAttribute::attr_modified()
+{
+    if (d->onLoad) return;
+
     QOrmObject *o = qobject_cast<QOrmObject*>(sender());
-    qDebug()<<o;
     if (!o) return;
-}
 
-QOrmMetaForeignKey::QOrmMetaForeignKey() :
-    QOrmMetaAttribute()
-{
-}
-
-QOrmMetaForeignKey::~QOrmMetaForeignKey()
-{
-}
-
-bool QOrmMetaForeignKey::isForeingkey() const
-{
-    return true;
-}
-
-void QOrmMetaForeignKey::setValue(QOrmObject *obj, QVariant v)
-{
-    if (!m_prop.isValid()) return;
-
-    bool b = false;
-    QOrmObject *ofk = QOrm::defaultOrm()->find(m_fktable, v);
-    if (ofk) b = true;
-    else ofk = fk.value<QOrmObject*>();
-    if (!ofk) {
-        qobject_cast<QOrmObject*>(m_prop.enclosingMetaObject()->newInstance());
-        b = true;
-    }
-
-    ofk->load(v);
-    if (b)
-        m_prop.write(obj, ofk);
-    else
-        m_prop.notifySignal().invoke(obj, Q_ARG(QObject*, ofk));
-}
-
-void QOrmMetaForeignKey::modified()
-{
-    qDebug()<<"no implemented";
-}
-
-QString QOrmMetaForeignKey::foreignTable() const
-{
-    return m_foreigntable;
-}
-
-void QOrmMetaForeignKey::setForeignTable(QString value)
-{
-    if (!m_foreigntable.isEmpty()) return;
-
-    m_foreigntable = value;
-}
-
-void QOrmMetaForeignKey::setForeignMeta(QOrmMetaTable *fkmeta)
-{
-    m_fktable = fkmeta;
-}
-
-void QOrmMetaForeignKey::setMetaProperty(QMetaProperty mprop)
-{
-    m_prop = mprop;
+    modified(o);
+    o->modified();
 }

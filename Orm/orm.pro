@@ -1,10 +1,10 @@
 TEMPLATE = lib
-TARGET = Orm
+TARGET = OrmQuick
 QT += qml quick sql
 CONFIG += qt plugin c++11
 
 TARGET = $$qtLibraryTarget($$TARGET)
-uri = QtQuick.Orm
+uri = OrmQuick
 
 # Input
 SOURCES += \
@@ -13,10 +13,12 @@ SOURCES += \
     qormmetaattribute.cpp \
     qormmetatable.cpp \
     qormobject.cpp \
-    #qormloader.cpp \
-    #qormsaver.cpp
     private/qormqueryparser.cpp \
-    qormloader.cpp
+    qormloader.cpp \
+    qormmetarelation.cpp \
+    qormmetaforeignkey.cpp \
+    qormmodel.cpp \
+    qormsaver.cpp
 
 HEADERS += \
     orm_plugin.h \
@@ -24,10 +26,14 @@ HEADERS += \
     qormmetaattribute.h \
     qormmetatable.h \
     qormobject.h \
-    #qormloader.h \
-    #qormsaver.h
     private/qormqueryparser.h \
-    qormloader.h
+    qormloader.h \
+    private/qormmetatable_p.h \
+    qormmetarelation.h \
+    qormmetaforeignkey.h \
+    qormmodel.h \
+    private/qormmodel_p.h \
+    qormsaver.h
 
 DISTFILES = qmldir
 

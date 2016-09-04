@@ -1,8 +1,9 @@
 import QtQuick 2.3
 import QtQuick.Controls 1.2
-import QtQuick.Orm 1.0
+import OrmQuick 1.0
 
 import "DB"
+import "DB/Meta"
 
 ApplicationWindow {
     visible: true
@@ -10,82 +11,77 @@ ApplicationWindow {
     height: 480
     title: qsTr("Hello World")
 
-    Component.onCompleted: {
-        Orm.user = "kbu9999"
-        Orm.password = "xtra2921"
-        Orm.database = "rci_db"
+    OrmDataBase {
+        id: db
+        user: "root"
+        password: "xtra2921"
+        database: "rci_db"
 
-        Orm.connect();
-        //save changed in db
-        //Orm.commit()
+        tables: [
+            MetaCliente,
+            MetaServicio,
+            MetaFactura
+        ]
 
-        ld.load()
-    }
+        onConnectedChanged: {
+            ld.item.load()
+        }
 
-    Connections{
-        target: Orm
         onError: console.log(error)
     }
 
-    OrmLoader {
+    Component.onCompleted: {
+        db.connect()
+    }
+
+    property Factura cli: Factura {
+        emision: new Date()
+
+        //onClienteChanged: console.log("cli: "+cli.cliente)
+    }
+
+    OrmRelationModel {
+        id: rel
+        metaTable: MetaCliente
+        rootObject: cli.cliente
+        property: "facturas"
+
+        onCountChanged: console.log(count)
+    }
+
+    Loader {
         id: ld
-        component: Cliente { }
-        //query:
-    }
-
-    menuBar: MenuBar {
-        Menu {
-            title: qsTr("File")
-            MenuItem {
-                text: qsTr("&Load")
-                onTriggered: ld.load()
-            }
-            MenuItem {
-                text: qsTr("Exit")
-                onTriggered: Qt.quit();
-            }
-        }
-    }
-
-    property Cliente cl: Cliente{ }
-
-    Rectangle {
-        x: 300
-        width: 200
-        height: 80
-        color: "purple"
-        Text {
-            text: cl.dni + " : "+cl.nombre
-            font.bold: true
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            anchors.fill: parent
-        }
-    }
-
-    ListView {
         anchors.fill: parent
-        model: ld.result
-        delegate: Rectangle {
-            width: 200; height: 80
-            color: "yellow"
 
-            Text {
-                text: dni + " : "+nombre
-                font.bold: true
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                anchors.fill: parent
-            }
+        source: "test_1.qml"
 
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    cl = ld.result[index]
-                    ld.clearResult()
-                }
+        Connections {
+            target: ld.item
+            ignoreUnknownSignals: true
+            onClientChanged: {
+                console.log("cl: "+cl)
+                cl.loadFacturas()
+                cli.cliente = cl;
+                rel.rootObject = cl
+                ld.sourceComponent = null
             }
         }
+    }
+
+    Timer {
+        //running: true
+        interval: 2000
+        repeat: true
+        onTriggered: {
+            for(var i in db.tables) {
+                var t = db.tables[i]
+                console.log(t.table+": "+t.count())
+            }
+        }
+    }
+
+    Button {
+        text: "clear"
+        onClicked: ld.sourceComponent = null
     }
 }
-

@@ -3,26 +3,31 @@
 
 #include <QtCore>
 
+class QOrm;
 class QOrmObject;
 
 class QOrmSaver
 {
 public:
-    void pushToSave(QOrmObject *obj);
-    void pushToDelete(QOrmObject *obj);
-    bool run();
+    QOrmSaver(QOrm *db);
+
+    bool isValid();
+
+    void start();
+    void Save(QOrmObject *obj);
+    void Delete(QOrmObject *obj);
+
+    bool commit();
+    void clear();
     //bool waitForFinnished();
+
     QString lastErrors();
-    QString lastQuery();
+    QStringList lastQuery();
 
 private:
-    QOrmSaver();
-
     class Private;
+    friend class Private;
     Private *d;
-
-    friend class QOrmAbstractModel;
-    friend class QOrmObject;
 };
 
 #endif // QORMSACER_H

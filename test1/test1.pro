@@ -13,3 +13,5 @@ message($$OUT_PWD)
 
 # Default rules for deployment.
 include(deployment.pri)
+
+DISTFILES +=

@@ -1,11 +1,14 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
-        <file>DB/DataBase.qml</file>
         <file>DB/qmldir</file>
-        <file>DB/MetaCliente.qml</file>
-        <file>Cliente.qml</file>
-        <file>Servicio.qml</file>
-        <file>DB/MetaServicio.qml</file>
+        <file>DB/Cliente.qml</file>
+        <file>DB/Servicio.qml</file>
+        <file>DB/Factura.qml</file>
+        <file>DB/Meta/qmldir</file>
+        <file>DB/Meta/MetaCliente.qml</file>
+        <file>DB/Meta/MetaFactura.qml</file>
+        <file>DB/Meta/MetaServicio.qml</file>
+        <file>test_1.qml</file>
     </qresource>
 </RCC>

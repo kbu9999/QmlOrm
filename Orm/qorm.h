@@ -8,9 +8,11 @@
 class QOrmObject;
 class QOrmMetaTable;
 
-class QOrm : public QObject
+class QOrm : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
+    Q_INTERFACES(QQmlParserStatus)
+    Q_PROPERTY(bool connected READ connected NOTIFY connectedChanged)
     Q_PROPERTY(QString database READ database WRITE setDatabase NOTIFY databaseChanged)
     Q_PROPERTY(QString user READ user WRITE setUser NOTIFY userChanged)
     Q_PROPERTY(QString password READ password WRITE setPassword NOTIFY passwordChanged)
@@ -19,6 +21,11 @@ class QOrm : public QObject
     Q_CLASSINFO("DefaultProperty", "tables")
 public:
     QOrm();
+
+    void classBegin();
+    void componentComplete();
+
+    bool connected() const;
 
     QString database() const;
     void setDatabase(QString value);
@@ -34,35 +41,38 @@ public:
 
     QList<QOrmMetaTable *> listTables() const;
     QQmlListProperty<QOrmMetaTable> tables();
-    void appendTable(QOrmMetaTable *t);
-    void removeTable(QOrmMetaTable *t);
 
+    QOrmMetaTable *findTable(QString tableName);
     QOrmObject *find(QOrmMetaTable *table, QVariant pk);
-    void append(QOrmObject *obj);
 
-    static QOrm *defaultOrm();
+    void newError(QString context, QString msg);
+    void start_transaction();
+    void end_transaction(bool exec);
+
+    void append(QOrmObject *obj);
+    void remove(QOrmObject *obj);
+
+    Q_INVOKABLE QVariantList exec(QString query, QVariantMap data = QVariantMap());
 
 public slots:
-    void connect();
-    void commint();
-
-private:
-    void initFks(QOrmMetaTable *t);
+    void connect(QString user="", QString pass="", QString db="", QString host="");
+    //bool commint();
+    //void append(QOrmObject *obj);
+    void deleted(QOrmObject *obj);
 
 signals:
+    void connectedChanged(bool value);
     void databaseChanged(QString);
     void userChanged(QString);
     void passwordChanged(QString);
     void hostChanged(QString);
     void tablesChanged();
     void error(QString error);
-    void connected();
 
 private:
     QSqlDatabase m_db;
     QList<QOrmMetaTable*> m_tables;
-
-    static QOrm * m_def;
+    bool m_started;
 };
 
 #endif // QORM_H

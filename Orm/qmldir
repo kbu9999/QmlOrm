@@ -1,2 +1,2 @@
-module QtQuick.Orm
-plugin Orm
+module OrmQuick
+plugin OrmQuick
