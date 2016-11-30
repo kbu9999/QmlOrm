@@ -260,11 +260,11 @@ QVariantList QOrm::exec(QString query, QVariantMap data)
 #include <QtConcurrent/QtConcurrent>
 #include <QFutureWatcher>
 
-static bool __opendb(QSqlDatabase *db) {
+/*static bool __opendb(QSqlDatabase *db) {
     bool bs = db->open();
     qDebug()<<"open "<<db<<bs;
     return bs;
-}
+}//*/
 
 void QOrm::connect(QString user, QString pass, QString db, QString host)
 {
@@ -274,7 +274,8 @@ void QOrm::connect(QString user, QString pass, QString db, QString host)
     if (!host.isEmpty()) setHost(host);
     if (m_db.isOpen()) return;
 
-    qDebug()<<"future"<<&m_db;
+    //qDebug()<<"future"<<&m_db;
+
     /*QFutureWatcher<bool> _watcher;
     QObject::connect(&_watcher, &QFutureWatcher<bool>::finished, this, &QOrm::__databaseOpen);
     QFuture<bool> future = QtConcurrent::run(__opendb, &m_db);//, &QSqlDatabase::open);
