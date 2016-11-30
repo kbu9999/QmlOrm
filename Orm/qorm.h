@@ -70,6 +70,8 @@ signals:
     void error(QString error);
 
 private:
+    void __databaseOpen();
+
     QSqlDatabase m_db;
     QList<QOrmMetaTable*> m_tables;
     bool m_started;
