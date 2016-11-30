@@ -37,8 +37,10 @@ static QList<QOrmObject*> fromQuery (QOrmLoader *ld, QSqlQuery q, QObject *paren
             obj = (QOrmObject*)ld->table()->create(parent);
             //obj->setIndexCount(ld->table()->indexCount());
         }
-        if (!obj)
+        if (!obj) {
+            qDebug()<<"no create obj";
             continue;
+        }
 
         if (obj->isSaved()) {
             lst.append(obj);
@@ -186,6 +188,7 @@ QList<QOrmObject *> QOrmLoader::loadAll(int limit, int offset)
 
     //result = fromQuery(this, q, parent()? parent() : this);
     result = fromQuery(this, q, this);
+    //qDebug()<<q.lastQuery()<<m_bindvalues;
     for(QOrmObject *o : result)
     {
         if (m_loadforeignkeys)

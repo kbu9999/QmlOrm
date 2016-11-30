@@ -36,7 +36,7 @@ public:
     bool needPrimaryKey();
     QVariant primaryKey();
     QVariantList indexes();
-    void setIndexValue(int i, QVariant v);
+    Q_INVOKABLE void setIndexValue(int i, QVariant v);
 
     void setMetaTable(QOrmMetaTable *mt);
     QOrmMetaTable *metaTable() const;

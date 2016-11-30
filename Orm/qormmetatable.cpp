@@ -226,8 +226,10 @@ void QOrmMetaTable::setUrl(QUrl value)
 
     if (!cmp->isNull())
         setComponenet(cmp);
-    else
+    else {
+        qDebug()<<value<<"no work";
         delete cmp;
+    }
 }
 
 void QOrmMetaTable::setComponenet(QQmlComponent *value)

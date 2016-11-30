@@ -1,0 +1,5 @@
+module DB.Meta
+
+singleton   MetaCliente MetaCliente.qml
+singleton   MetaServicio MetaServicio.qml
+singleton   MetaFactura MetaFactura.qml

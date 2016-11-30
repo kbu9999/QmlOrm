@@ -14,7 +14,7 @@
 
 typedef QPair<QOrmObject*, QVariant> Pair;
 
-static bool execQuery(QSqlQuery *q, QOrmMetaTable *t, QOrmObject *o) {
+/*static bool execQuery(QSqlQuery *q, QOrmMetaTable *t, QOrmObject *o) {
     for(QOrmMetaAttribute *attr : t->listAttributes()) {
         QString e = ":" + attr->attribute().replace(" ", "_");
         if (attr->isIndex())
@@ -24,7 +24,7 @@ static bool execQuery(QSqlQuery *q, QOrmMetaTable *t, QOrmObject *o) {
     }
 
     return q->exec();
-}
+}//*/
 
 static void find_dependencies(QOrm *db, QOrmMetaTable *v) {
     for(QOrmMetaForeignKey *fka : v->listForeignkeys()) {
@@ -138,7 +138,7 @@ QOrmObject *QOrm::find(QOrmMetaTable *table, QVariant pk)
     if (!t) return;
 
     t->append(obj);
-    /*for(QOrmMetaRelation *r : t->listRelations()) {
+    for(QOrmMetaRelation *r : t->listRelations()) {
         for(QOrmObject *o : r->toList(obj)) {
             if (o->metaTable()) o->metaTable()->append(o);
         }
@@ -247,6 +247,9 @@ QVariantList QOrm::exec(QString query, QVariantMap data)
     return a.toVariantList();
 }
 
+#include <QtConcurrent/QtConcurrent>
+#include <QFutureWatcher>
+
 void QOrm::connect(QString user, QString pass, QString db, QString host)
 {
     if (!user.isEmpty()) setUser(user);
@@ -255,10 +258,15 @@ void QOrm::connect(QString user, QString pass, QString db, QString host)
     if (!host.isEmpty()) setHost(host);
     if (m_db.isOpen()) return;
 
-    if (!m_db.open()) {
+    QFutureWatcher<bool> _watcher();
+    QObject::connect(&_watcher, &QFutureWatcher<bool>::finished, this, [=](){ emit connectedChanged(true); });
+    QFuture<bool> future = QtConcurrent::run(&m_db, &QSqlDatabase::open);
+    //_watcher.setFuture(future);
+
+    /*if (!m_db.open()) {
         emit error(m_db.lastError().text());
         return;
     }
 
-    emit connectedChanged(true);
+    emit connectedChanged(true); //*/
 }
