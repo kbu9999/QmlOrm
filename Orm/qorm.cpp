@@ -156,7 +156,12 @@ void QOrm::deleted(QOrmObject *obj)
 
 void QOrm::__databaseOpen()
 {
-    emit connectedChanged(m_db.isOpen());
+    if (!m_db.open()) {
+        emit error(m_db.lastError().text());
+        return;
+    }
+    //qDebug()<<"open";
+    emit connectedChanged(true); //*/
 }
 
 QQmlListProperty<QOrmMetaTable> QOrm::tables()
@@ -256,7 +261,9 @@ QVariantList QOrm::exec(QString query, QVariantMap data)
 #include <QFutureWatcher>
 
 static bool __opendb(QSqlDatabase *db) {
-    return db->open();
+    bool bs = db->open();
+    qDebug()<<"open "<<db<<bs;
+    return bs;
 }
 
 void QOrm::connect(QString user, QString pass, QString db, QString host)
@@ -267,10 +274,12 @@ void QOrm::connect(QString user, QString pass, QString db, QString host)
     if (!host.isEmpty()) setHost(host);
     if (m_db.isOpen()) return;
 
-    QFutureWatcher<bool> _watcher;
+    qDebug()<<"future"<<&m_db;
+    /*QFutureWatcher<bool> _watcher;
     QObject::connect(&_watcher, &QFutureWatcher<bool>::finished, this, &QOrm::__databaseOpen);
     QFuture<bool> future = QtConcurrent::run(__opendb, &m_db);//, &QSqlDatabase::open);
-    _watcher.setFuture(future);
+    _watcher.setFuture(future);/*/
+    QtConcurrent::run(this, &QOrm::__databaseOpen);
 
     /*if (!m_db.open()) {
         emit error(m_db.lastError().text());
